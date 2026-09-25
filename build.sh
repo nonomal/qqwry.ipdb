@@ -2,25 +2,29 @@
 
 set -e
 
-mkdir -p build/stand
 mkdir -p build/raw
+mkdir -p build/stand
 
-wget http://update.cz88.net/ip/copywrite.rar -4 -O build/copywrite.rar --user-agent="Mozilla/3.0 (compatible; Indy Library)"
-wget http://update.cz88.net/ip/qqwry.rar -4 -O build/qqwry.rar --user-agent="Mozilla/3.0 (compatible; Indy Library)"
+wget "https://www.cz88.net/api/communityIpAuthorization/communityIpDbFile?fn=czdb&key=${CZDB_DOWNLOAD_TOKEN}" -O build/czdb.zip
+unzip build/czdb.zip -d build/
 
-node src/decode.js
-node src/packer.js
 node src/packer_raw.js
+ls -alh build/raw
 
 LATEST_VERSION=`node src/version.js`
-CURRENT_VERSION=`curl http://registry.npmjs.org/qqwry.ipdb | jq -r '."dist-tags".latest'`
 
-if [ $CURRENT_VERSION != $LATEST_VERSION ]; then
+RAW_CURRENT_VERSION=`curl https://registry.npmjs.org/qqwry.raw.ipdb | jq -r '."dist-tags".latest'`
+if [ $RAW_CURRENT_VERSION != $LATEST_VERSION ]; then
   cp README.md build/raw/README.md
   cd build/raw
   npm publish
   cd ../..
+fi
 
+STANDARD_CURRENT_VERSION=`curl https://registry.npmjs.org/qqwry.ipdb | jq -r '."dist-tags".latest'`
+if [ $STANDARD_CURRENT_VERSION != $LATEST_VERSION ]; then
+  node src/packer_stand.js
+  ls -alh build/stand
   cp README.md build/stand/README.md
   cd build/stand
   npm publish
